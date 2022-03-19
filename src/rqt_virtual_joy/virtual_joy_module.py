@@ -45,8 +45,8 @@ class MyPlugin(Plugin):
 
         args, unknowns = parser.parse_known_args(context.argv())
         if not args.quiet:
-            print 'arguments: ', args
-            print 'unknowns: ', unknowns
+            print('arguments: ' + str(args))
+            print('unknowns: ' + str(unknowns))
 
         # Create QWidget
         self._widget = QWidget()
@@ -192,3 +192,4 @@ class MyPlugin(Plugin):
         # Comment in to signal that the plugin has a way to configure
         # This will enable a setting button (gear icon) in each dock widget title bar
         # Usually used to open a modal configuration dialog
+
