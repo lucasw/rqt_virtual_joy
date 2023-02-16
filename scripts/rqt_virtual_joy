@@ -2,8 +2,9 @@
 
 import sys
 
-from rqt_virtual_joy.virtual_joy_module import MyPlugin
+# from rqt_virtual_joy.virtual_joy_module import MyPlugin
 from rqt_gui.main import Main
+
 
 plugin = 'rqt_virtual_joy'
 main = Main(filename=plugin)
