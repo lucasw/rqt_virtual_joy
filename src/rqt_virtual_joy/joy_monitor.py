@@ -1,17 +1,21 @@
+import copy
 import os
+from threading import Lock
+
 import rospy
 import rospkg
-from sensor_msgs.msg import Joy
-
 from qt_gui.plugin import Plugin
+from python_qt_binding import QtCore
 from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
-from python_qt_binding import QtCore
+from sensor_msgs.msg import Joy
 
 
 class JoyMonitor(Plugin):
     def __init__(self, context):
         super(JoyMonitor, self).__init__(context)
+
+        self.lock = Lock()
 
         # Give QObjects reasonable names
         self.setObjectName('JoyMonitor')
@@ -33,11 +37,6 @@ class JoyMonitor(Plugin):
                             type=float,
                             help="Set publish rate [default:20]",
                             default=20)
-        parser.add_argument("--type",
-                            dest="type",
-                            type=str,
-                            choices=['circle', 'square'],
-                            default='circle')
 
         args, unknowns = parser.parse_known_args(context.argv())
         if not args.quiet:
@@ -64,34 +63,35 @@ class JoyMonitor(Plugin):
 
         self._widget.topicLineEdit.returnPressed.connect(self.topicNameUpdated)
         self._widget.topicLineEdit.setText(args.topic)  # Default Topic
-        self.updatePublisher()
+        self.updateSubscriber()
 
-        self._widget.publishCheckBox.stateChanged.connect(self.publishCheckboxChanged)
-        self._widget.rateSpinBox.valueChanged.connect(self.publishRateSpinBoxChanged)
-        self._widget.rateSpinBox.setValue(args.rate)
+        self._widget.publishCheckBox.hide()
+        self._widget.rateSpinBox.hide()
 
-        self._widget.joy.xMoved.connect(self.receiveX)
-        self._widget.joy.yMoved.connect(self.receiveY)
-
-        self._widget.shapeSelectBox.addItem("square")
-        self._widget.shapeSelectBox.addItem("circle")
-
-        self._widget.shapeSelectBox.activated.connect(self.indexChanged)
-        self._widget.shapeSelectBox.setCurrentText(args.type)  # circle
-        self._widget.joy.setMode(args.type)
+        self._widget.shapeSelectBox.hide()
+        self._widget.joy.setMode("square")
 
     def topicNameUpdated(self):
-        self.updatePublisher()
+        self.updateSubscriber()
 
-    def updatePublisher(self):
+    def updateSubscriber(self):
         topic = str(self._widget.topicLineEdit.text())
         try:
-            if self.pub is not None:
-                self.pub.unregister()
+            if self.sub is not None:
+                self.sub.unregister()
         except Exception:
             pass
-        self.pub = None
-        self.pub = rospy.Publisher(topic, Joy, queue_size=10)
+        self.sub = None
+        self.joy_msg = Joy()
+        rospy.loginfo(f"subscribing to {topic}")
+        self.sub = rospy.Subscriber(topic, Joy, self.joy_callback, queue_size=10)
+
+        rate = self._widget.rateSpinBox.value()
+        self.startIntervalTimer(int(1000.0 / rate))
+
+    def joy_callback(self, joy_msg):
+        with self.lock:
+            self.joy_msg = joy_msg
 
     def startIntervalTimer(self, msec):
         try:
@@ -104,69 +104,33 @@ class JoyMonitor(Plugin):
             self._timer.setInterval(msec)
             self._timer.start()
 
-    def publishCheckboxChanged(self, status):
-        self.updateROSPublishState()
-
-    def publishRateSpinBoxChanged(self, status):
-        self.updateROSPublishState()
-
-    def updateROSPublishState(self):
-        if self._widget.publishCheckBox.checkState() == QtCore.Qt.Checked:
-            rate = self._widget.rateSpinBox.value()
-            self.startIntervalTimer(int(1000.0 / rate))
-        else:
-            self.startIntervalTimer(-1)  # Stop Timer (Stop Publish)
-
-    def indexChanged(self, index):
-        text = str(self._widget.shapeSelectBox.currentText())
-        self._widget.joy.setMode(str(text))
-
-    def receiveX(self, val):
-        self.updateJoyPosLabel()
-
-    def receiveY(self, val):
-        self.updateJoyPosLabel()
-
     def updateJoyPosLabel(self):
         pos = self.getROSJoyValue()
         text = "({:1.2f},{:1.2f})".format(pos['x'], pos['y'])
         self._widget.joyPosLabel.setText(text)
 
     def processTimerShot(self):
-        joy = self.getROSJoyValue()
-        msg = Joy()
-        msg.header.stamp = rospy.Time.now()
-        msg.axes.append(float(joy['x']))
-        msg.axes.append(float(joy['y']))
+        with self.lock:
+            joy_msg = copy.deepcopy(self.joy_msg)
 
-        button_num = 1
-        while True:
+        num_axes = len(joy_msg.axes)
+        num_buttons = len(joy_msg.buttons)
+
+        if num_axes >= 2:
+            x = joy_msg.axes[0]
+            y = joy_msg.axes[1]
+            self._widget.joy._stickView.move_joy(x, y)
+
+        # TODO(lucasw) this method is ugly, should make buttons into a list on init
+        for i in range(num_buttons):
             try:
-                # TODO(lucasw) why eval()?
-                msg.buttons.append(eval("self._widget.button" + str(button_num)).isDown())
-                button_num += 1
-            except Exception:
+                eval("self._widget.button" + str(i + 1)).setDown(joy_msg.buttons[i])
+            except (AttributeError, IndexError):  # as ex:
+                # rospy.logwarn_throttle(1.0, ex)
                 break
 
-        try:
-            self.pub.publish(msg)
-        except Exception:
-            rospy.logwarn("publisher not initialized")
-            pass
-
-    def getROSJoyValue(self):
-        return self._widget.joy.getJoyValue()
-        # return self.convertREPCoordinate(self._widget.joy.getJoyValue())
-
-    def convertREPCoordinate(self, joy_input):
-        output = {}
-        output['x'] = joy_input['y']
-        output['y'] = joy_input['x']
-        return output
-
     def shutdown_plugin(self):
-        # TODO unregister all publishers here
-        self.pub.unregister()
+        self.sub.unregister()
         pass
 
     def save_settings(self, plugin_settings, instance_settings):

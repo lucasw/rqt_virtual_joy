@@ -1,3 +1,4 @@
+import rospy
 from python_qt_binding import QtCore
 from python_qt_binding.QtGui import QPainter, QPen, QBrush
 from python_qt_binding.QtWidgets import QWidget
@@ -78,6 +79,7 @@ class JoystickPointView(QWidget):
         super(JoystickPointView, self).__init__(parent)
         self._range = 200
         self._mode = "circle"
+        self._origPos = self.pos()
 
     def paintEvent(self, event):
         super(JoystickPointView, self).paintEvent(event)
@@ -234,3 +236,6 @@ class JoystickPointView(QWidget):
             self.xMoved.emit(newJoyPos['x'])
         if(pastJoyPos['y'] != newJoyPos['y']):
             self.yMoved.emit(newJoyPos['y'])
+
+    def move_joy(self, x: float, y: float):
+        return self._moveJoy(QtCore.QPoint(int(x * self._range), int(y * self._range)))
