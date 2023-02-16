@@ -122,7 +122,7 @@ class MyPlugin(Plugin):
 
         if self._widget.publishCheckBox.checkState() == QtCore.Qt.Checked:
             rate = self._widget.rateSpinBox.value()
-            self.startIntervalTimer(float(1000.0/rate))
+            self.startIntervalTimer(int(1000.0 / rate))
         else:
             self.startIntervalTimer(-1)  # Stop Timer (Stop Publish)
 

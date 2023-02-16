@@ -41,7 +41,7 @@ class JoystickView(QWidget):
 
         borderWidth = 1
         joyRange = 80
-        center = QtCore.QPoint(self.height()/2,self.width()/2)
+        center = QtCore.QPoint(self.height() // 2, self.width() // 2)
         
         qp = QPainter()
         qp.begin(self)
@@ -64,8 +64,8 @@ class JoystickView(QWidget):
         super(JoystickView,self).paintEvent(event)
 
     def placeStickAtCenter(self):
-        stickInitPosH = self.height()/2 - self._stickSize /2 
-        stickInitPosW = self.width()/2  - self._stickSize /2
+        stickInitPosH = self.height() // 2 - self._stickSize // 2
+        stickInitPosW = self.width() // 2  - self._stickSize // 2
         self._stickView.setGeometry(stickInitPosH,stickInitPosW,self._stickSize,self._stickSize)
 
     def getJoyValue(self):
@@ -98,8 +98,8 @@ class JoystickPointView(QWidget):
         qp.begin(self)
         
         borderWidth = 2
-        radius = self.height()/2
-        center = QtCore.QPoint(self.height()/2,self.width()/2) 
+        radius = self.height() // 2
+        center = QtCore.QPoint(self.height() // 2, self.width() // 2)
         
         # Outer Circle
         qp.setRenderHint(QPainter.Antialiasing, True)
@@ -163,15 +163,15 @@ class JoystickPointView(QWidget):
     def centerPos(self,pos = None):
         if pos is None:
             pos = self.pos()
-        x = pos.x() + (self.width() / 2)
-        y = pos.y() + (self.height() / 2)
+        x = pos.x() + (self.width() // 2)
+        y = pos.y() + (self.height() // 2)
         return QtCore.QPoint(x,y)
     
     def revertCenterPos(self, pos = None):
         if pos is None:
             pos = self.pos()
-        x = pos.x() - (self.width() / 2)
-        y = pos.y() - (self.height() / 2)
+        x = pos.x() - (self.width() // 2)
+        y = pos.y() - (self.height() // 2)
         return QtCore.QPoint(x,y)    
 
     def limitStickMove(self,pos,mode = "square"):
@@ -206,7 +206,7 @@ class JoystickPointView(QWidget):
             else:
                 y = pos.y()
 
-        return QtCore.QPoint(x,y)
+        return QtCore.QPoint(int(x), int(y))
 
     def setMode(self,mode):
         self._mode = mode
