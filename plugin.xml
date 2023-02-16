@@ -1,5 +1,5 @@
 <library path="src">
-  <class name="My Plugin" type="rqt_virtual_joy.virtual_joy_module.MyPlugin" base_class_type="rqt_gui_py::Plugin">
+  <class name="VirtualJoy" type="rqt_virtual_joy.virtual_joy_module.VirtualJoy" base_class_type="rqt_gui_py::Plugin">
     <description>
       Generate Joy messages
     </description>
@@ -17,4 +17,24 @@
       <statustip>Generate Joy messages</statustip>
     </qtgui>
   </class>
+
+  <class name="JoyMonitor" type="rqt_virtual_joy.joy_monitor.JoyMonitor" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      Visualize Joy messages
+    </description>
+    <qtgui>
+
+      <group>
+        <label>Robot Tools</label>
+      </group>
+      <!-- <group>
+        <label>Subgroup</label>
+      </group> -->
+
+      <label>Joystick Monitor</label>
+      <icon type="file">resource/input-gaming.png</icon>
+      <statustip>Visualize Joy messages</statustip>
+    </qtgui>
+  </class>
+
 </library>

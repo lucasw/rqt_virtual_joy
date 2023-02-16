@@ -17,6 +17,7 @@ include_directories(
 
 catkin_install_python(PROGRAMS
   scripts/${PROJECT_NAME}
+  scripts/rqt_joy_monitor
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -9,12 +9,12 @@ from python_qt_binding.QtWidgets import QWidget
 from python_qt_binding import QtCore
 
 
-class VirtualJoy(Plugin):
+class JoyMonitor(Plugin):
     def __init__(self, context):
-        super(VirtualJoy, self).__init__(context)
+        super(JoyMonitor, self).__init__(context)
 
         # Give QObjects reasonable names
-        self.setObjectName('VirtualJoy')
+        self.setObjectName('JoyMonitor')
 
         # Process standalone plugin command-line arguments
         from argparse import ArgumentParser
@@ -51,7 +51,7 @@ class VirtualJoy(Plugin):
         # Extend the widget with all attributes and children from UI file
         loadUi(ui_file, self._widget)
         # Give QObjects reasonable names
-        self._widget.setObjectName('VirtualJoyUi')
+        self._widget.setObjectName('JoyMonitorUi')
         # Show _widget.windowTitle on left-top of each plugin (when
         # it's set in _widget). This is useful when you open multiple
         # plugins at once. Also if you open multiple instances of your
